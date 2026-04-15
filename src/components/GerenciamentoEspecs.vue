@@ -39,8 +39,7 @@ const salvarEspecificacao = async () => {
 
   try {
     carregando.value = true;
-    await axios.post(apiURL, novaEspecificacao.value);
-    
+    await axios.post(`${apiURL}/novo`, novaEspecificacao.value);
     // Limpa o input após o sucesso
     novaEspecificacao.value.nome = ''; 
     

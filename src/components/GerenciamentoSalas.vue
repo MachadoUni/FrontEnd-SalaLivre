@@ -21,8 +21,8 @@ const carregarDados = async () => {
   carregando.value = true;
   try {
     const [resSalas, resEspec] = await Promise.all([
-      axios.get(`${apiURL}/salas`),
-      axios.get(`${apiURL}/especificacoes`) 
+      axios.get(`${apiURL}`),
+      axios.get(`http://localhost:8080/especificacoes`) 
     ]);
     salas.value = resSalas.data;
     especificacoes.value = resEspec.data;
@@ -35,9 +35,8 @@ const carregarDados = async () => {
 };
 
 const salvarSala = async () => {
-  erro.value = ''; // Limpa erros anteriores
+  erro.value = '';
 
-  // Validação no front-end espelhando a do back-end
   if (!novaSala.value.nome || novaSala.value.nome.trim() === '') {
     erro.value = "Nome da sala é obrigatório!";
     return;
@@ -47,19 +46,28 @@ const salvarSala = async () => {
     return;
   }
 
+  const payload = {
+    nome: novaSala.value.nome,
+    maxAlunos: Number(novaSala.value.maxAlunos),
+    especId: Array.isArray(novaSala.value.especId) ? novaSala.value.especId : []
+  };
+
   try {
+    carregando.value = true;
+    
     if (editando.value) {
-      // Atualizar (PUT)
-      await axios.put(`${apiURL}/${editando.value.id}`, novaSala.value);
+      await axios.put(`${apiURL}/${editando.value.id}`, payload);
     } else {
-      // Criar (POST)
-      await axios.post(`${apiURL}/novo`, novaSala.value);
+      await axios.post(`${apiURL}/novo`, payload);
     }
+    
     limparFormulario();
-    await carregarDados(); // Recarrega a tabela atualizada
+    await carregarDados(); 
   } catch (e) {
-    // Captura a Exception lançada pelo seu Spring Boot
-    erro.value = e.response?.data?.message || e.response?.data || "Erro ao salvar a sala. Verifique os dados.";
+    erro.value = e.response?.data?.message || e.response?.data || "Erro 400: Estrutura de dados rejeitada pelo servidor.";
+    console.error(e);
+  } finally {
+    carregando.value = false;
   }
 };
 
@@ -80,13 +88,17 @@ const editarSala = (sala) => {
   novaSala.value = { 
     nome: sala.nome, 
     maxAlunos: sala.maxAlunos,
-    // Extrai apenas os IDs da lista de objetos para alimentar o epecId do DTO
-    epecId: sala.listaEspecificacoes.map(especificacao => especificacao.id)
+    // Extrai apenas os IDs da lista de objetos para alimentar o especId do DTO
+    especId: sala.listaEspecificacoes.map(especificacao => especificacao.id)
   };
 };
 
 const limparFormulario = () => {
-  novaSala.value = { nome: '', maxAlunos: null, epecId: [] };
+  novaSala.value = { 
+    nome: '', 
+    maxAlunos: null, 
+    especId: []
+  };
   editando.value = null;
   erro.value = '';
 };
@@ -123,7 +135,7 @@ onMounted(carregarDados);
             <input 
               type="checkbox" 
               :value="espec.id" 
-              v-model="novaSala.epecId" 
+              v-model="novaSala.especId" 
             />
             {{ espec.nome }} 
           </label>
