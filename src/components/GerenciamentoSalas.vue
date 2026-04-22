@@ -1,6 +1,132 @@
+<template>
+  <div class="max-w-5xl mx-auto space-y-6">
+    
+    <div class="flex items-center gap-2 mb-6">
+      <DoorOpen class="w-6 h-6 text-primary" />
+      <h1 class="text-2xl font-bold text-foreground">Gerenciamento de Salas</h1>
+    </div>
+
+    <div v-if="erro" class="p-4 mb-4 text-sm text-destructive-foreground bg-destructive/10 border border-destructive/20 rounded-lg">
+      {{ erro }}
+    </div>
+
+    <div class="bg-card border border-border rounded-xl shadow-sm overflow-hidden">
+      <div class="px-6 py-4 border-b border-border bg-muted/30">
+        <h3 class="text-lg font-semibold text-foreground">{{ editando ? 'Editar Sala' : 'Cadastrar Nova Sala' }}</h3>
+      </div>
+      
+      <div class="p-6">
+        <form @submit.prevent="salvarSala" class="space-y-6">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="space-y-2">
+              <label class="text-sm font-medium text-foreground">Nome da Sala</label>
+              <input 
+                v-model="novaSala.nome" 
+                type="text" 
+                class="w-full h-10 px-3 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                placeholder="Ex: Sala 101 - Bloco A" required 
+              />
+            </div>
+
+            <div class="space-y-2">
+              <label class="text-sm font-medium text-foreground">Capacidade Máxima</label>
+              <input 
+                v-model="novaSala.maxAlunos" 
+                type="number" min="1"
+                class="w-full h-10 px-3 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                placeholder="Ex: 40" required 
+              />
+            </div>
+          </div>
+
+          <div class="space-y-3">
+            <label class="text-sm font-medium text-foreground">Especificações Inclusas</label>
+            <div class="flex flex-wrap gap-3 p-4 border border-border rounded-lg bg-muted/10">
+              <span v-if="especificacoes.length === 0" class="text-sm text-muted-foreground">Nenhuma especificação cadastrada no sistema.</span>
+              
+              <label v-for="espec in especificacoes" :key="espec.id" class="flex items-center gap-2 cursor-pointer">
+                <input 
+                  type="checkbox" 
+                  :value="espec.id" 
+                  v-model="novaSala.especId"
+                  class="w-4 h-4 text-primary bg-background border-input rounded focus:ring-primary"
+                />
+                <span class="text-sm text-foreground">{{ espec.nome }}</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="flex justify-end gap-3 pt-4 border-t border-border">
+            <button 
+              v-if="editando" 
+              type="button" 
+              @click="limparFormulario"
+              class="px-4 py-2 text-sm font-medium text-foreground bg-transparent border border-border rounded-lg hover:bg-muted transition-colors"
+            >
+              Cancelar
+            </button>
+            <button 
+              type="submit" 
+              :disabled="carregando"
+              class="px-4 py-2 text-sm font-medium text-primary-foreground bg-primary rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50"
+            >
+              {{ carregando ? 'Processando...' : (editando ? 'Atualizar Sala' : 'Salvar Sala') }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div class="bg-card border border-border rounded-xl shadow-sm overflow-hidden mt-8">
+      <div class="px-6 py-4 border-b border-border bg-muted/30">
+        <h3 class="text-lg font-semibold text-foreground">Salas Cadastradas</h3>
+      </div>
+      
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm text-left text-foreground">
+          <thead class="text-xs text-muted-foreground uppercase bg-muted/50 border-b border-border">
+            <tr>
+              <th class="px-6 py-3">Nome</th>
+              <th class="px-6 py-3">Capacidade</th>
+              <th class="px-6 py-3">Especificações</th>
+              <th class="px-6 py-3 text-right">Ações</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-border">
+            <tr v-if="salas.length === 0">
+              <td colspan="4" class="px-6 py-8 text-center text-muted-foreground">Nenhuma sala encontrada.</td>
+            </tr>
+            <tr v-for="sala in salas" :key="sala.id" class="hover:bg-muted/20 transition-colors">
+              <td class="px-6 py-4 font-medium">{{ sala.nome }}</td>
+              <td class="px-6 py-4">{{ sala.maxAlunos }} alunos</td>
+              <td class="px-6 py-4">
+                <div class="flex flex-wrap gap-1">
+                  <span 
+                    v-for="espec in sala.listaEspecificacoes" :key="espec.id"
+                    class="px-2 py-1 text-xs rounded-md bg-secondary text-secondary-foreground"
+                  >
+                    {{ espec.nome }}
+                  </span>
+                  <span v-if="!sala.listaEspecificacoes || sala.listaEspecificacoes.length === 0" class="text-muted-foreground">Nenhuma</span>
+                </div>
+              </td>
+              <td class="px-6 py-4 text-right space-x-3">
+                <button @click="editarSala(sala)" class="font-medium text-primary hover:underline">Editar</button>
+                <button @click="excluirSala(sala.id)" class="font-medium text-destructive hover:underline">Excluir</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</template>
+
 <script setup>
 import { ref, onMounted } from 'vue';
 import axios from 'axios';
+import { DoorOpen } from 'lucide-vue-next';
 
 const apiURL = "http://localhost:8080/salas";
 
@@ -36,16 +162,7 @@ const carregarDados = async () => {
 
 const salvarSala = async () => {
   erro.value = '';
-
-  if (!novaSala.value.nome || novaSala.value.nome.trim() === '') {
-    erro.value = "Nome da sala é obrigatório!";
-    return;
-  }
-  if (!novaSala.value.maxAlunos || novaSala.value.maxAlunos <= 0) {
-    erro.value = "Número máximo de alunos inválido!";
-    return;
-  }
-
+  
   const payload = {
     nome: novaSala.value.nome,
     maxAlunos: Number(novaSala.value.maxAlunos),
@@ -54,18 +171,15 @@ const salvarSala = async () => {
 
   try {
     carregando.value = true;
-    
     if (editando.value) {
       await axios.put(`${apiURL}/${editando.value.id}`, payload);
     } else {
       await axios.post(`${apiURL}/novo`, payload);
     }
-    
     limparFormulario();
     await carregarDados(); 
   } catch (e) {
-    erro.value = e.response?.data?.message || e.response?.data || "Erro 400: Estrutura de dados rejeitada pelo servidor.";
-    console.error(e);
+    erro.value = e.response?.data?.message || e.response?.data || "Erro ao salvar a sala.";
   } finally {
     carregando.value = false;
   }
@@ -94,90 +208,10 @@ const editarSala = (sala) => {
 };
 
 const limparFormulario = () => {
-  novaSala.value = { 
-    nome: '', 
-    maxAlunos: null, 
-    especId: []
-  };
+  novaSala.value = { nome: '', maxAlunos: null, especId: [] };
   editando.value = null;
   erro.value = '';
 };
 
 onMounted(carregarDados);
 </script>
-
-<template>
-  <div class="container">
-    <h2>Gerenciamento de Salas</h2>
-
-    <div v-if="carregando" class="loading">Carregando dados...</div>
-    <div v-if="erro" class="error-message" style="color: red; font-weight: bold;">{{ erro }}</div>
-
-    <form @submit.prevent="salvarSala" class="form-sala">
-      
-      <div class="form-group">
-        <label>Nome da Sala:</label>
-        <input v-model="novaSala.nome" type="text" placeholder="Ex: Laboratório 1" required />
-      </div>
-
-      <div class="form-group">
-        <label>Capacidade Máxima (Alunos):</label>
-        <input v-model="novaSala.maxAlunos" type="number" min="1" placeholder="Ex: 40" required />
-      </div>
-
-      <div class="form-group">
-        <label>Especificações da Sala:</label>
-        
-        <div class="checkbox-list">
-          <span v-if="especificacoes.length === 0">Nenhuma especificação cadastrada.</span>
-          
-          <label v-for="espec in especificacoes" :key="espec.id" style="display: block; margin-bottom: 5px;">
-            <input 
-              type="checkbox" 
-              :value="espec.id" 
-              v-model="novaSala.especId" 
-            />
-            {{ espec.nome }} 
-          </label>
-        </div>
-      </div>
-
-      <div class="form-actions">
-        <button type="submit" :disabled="carregando">
-          {{ editando ? 'Atualizar Sala' : 'Salvar Nova Sala' }}
-        </button>
-        <button v-if="editando" @click="limparFormulario" type="button">Cancelar</button>
-      </div>
-    </form>
-
-    <hr />
-
-    <h3>Salas Cadastradas</h3>
-    <table border="1" width="100%">
-      <thead>
-        <tr>
-          <th>Nome</th>
-          <th>Máx. Alunos</th>
-          <th>Especificações</th>
-          <th>Ações</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-for="sala in salas" :key="sala.id">
-          <td>{{ sala.nome }}</td>
-          <td>{{ sala.maxAlunos }}</td>
-          <td>
-            <span v-if="sala.listaEspecificacoes && sala.listaEspecificacoes.length > 0">
-              {{ sala.listaEspecificacoes.map(e => e.nome).join(', ') }}
-            </span>
-            <span v-else>Nenhuma</span>
-          </td>
-          <td>
-            <button @click="editarSala(sala)" :disabled="carregando">Editar</button>
-            <button @click="excluirSala(sala.id)" :disabled="carregando">Excluir</button>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
-</template>

@@ -1,6 +1,73 @@
+<template>
+  <div class="max-w-4xl mx-auto space-y-6">
+    
+    <div class="flex items-center gap-2 mb-6">
+      <Settings2 class="w-6 h-6 text-primary" />
+      <h1 class="text-2xl font-bold text-foreground">Especificações das Salas</h1>
+    </div>
+
+    <div v-if="erro" class="p-4 mb-4 text-sm text-destructive-foreground bg-destructive/10 border border-destructive/20 rounded-lg">
+      {{ erro }}
+    </div>
+
+    <div class="bg-card border border-border rounded-xl shadow-sm overflow-hidden">
+      <div class="p-6 flex flex-col md:flex-row md:items-end gap-4">
+        <div class="flex-1 space-y-2">
+          <label class="text-sm font-medium text-foreground">Nova Especificação</label>
+          <input 
+            v-model="novaEspecificacao.nome" 
+            type="text" 
+            class="w-full h-10 px-3 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+            placeholder="Ex: Projetor, Ar Condicionado..." 
+            @keyup.enter="salvarEspecificacao"
+          />
+        </div>
+        <button 
+          @click="salvarEspecificacao"
+          :disabled="carregando"
+          class="h-10 px-6 py-2 text-sm font-medium text-primary-foreground bg-primary rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50 whitespace-nowrap"
+        >
+          Adicionar
+        </button>
+      </div>
+    </div>
+
+    <div class="bg-card border border-border rounded-xl shadow-sm overflow-hidden">
+      <table class="w-full text-sm text-left text-foreground">
+        <thead class="text-xs text-muted-foreground uppercase bg-muted/50 border-b border-border">
+          <tr>
+            <th class="px-6 py-3 w-16">ID</th>
+            <th class="px-6 py-3">Nome da Especificação</th>
+            <th class="px-6 py-3 text-right w-24">Ações</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-border">
+          <tr v-if="especificacoes.length === 0">
+            <td colspan="3" class="px-6 py-8 text-center text-muted-foreground">Nenhuma especificação cadastrada.</td>
+          </tr>
+          <tr v-for="espec in especificacoes" :key="espec.id" class="hover:bg-muted/20 transition-colors">
+            <td class="px-6 py-4 font-medium text-muted-foreground">#{{ espec.id }}</td>
+            <td class="px-6 py-4 font-medium">{{ espec.nome }}</td>
+            <td class="px-6 py-4 text-right">
+              <button 
+                @click="excluirEspecificacao(espec.id)" 
+                class="font-medium text-destructive hover:underline"
+              >
+                Excluir
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+</template>
+
 <script setup>
 import { ref, onMounted } from 'vue';
 import axios from 'axios';
+import { Settings2 } from 'lucide-vue-next';
 
 // URL direta para as especificações
 const apiURL = "http://localhost:8080/especificacoes"; 
@@ -71,64 +138,3 @@ const excluirEspecificacao = async (id) => {
 // Busca inicial
 onMounted(carregarDados);
 </script>
-
-<template>
-  <div class="container">
-    <h2>Gerenciamento de Especificações</h2>
-
-    <div v-if="carregando" class="loading">Carregando dados...</div>
-    <div v-if="erro" class="error-message" style="color: red; font-weight: bold; margin-bottom: 10px;">
-      {{ erro }}
-    </div>
-
-    <form @submit.prevent="salvarEspecificacao" class="form-especificacao">
-      <div class="form-group" style="margin-bottom: 15px;">
-        <label style="display: block; margin-bottom: 5px;">Nome da Especificação:</label>
-        <div style="display: flex; gap: 10px;">
-          <input 
-            v-model="novaEspecificacao.nome" 
-            type="text" 
-            placeholder="Ex: Projetor, Ar Condicionado, Quadro de Vidro" 
-            required 
-            style="flex: 1; padding: 8px;"
-          />
-          <button type="submit" :disabled="carregando" style="padding: 8px 15px;">
-            Adicionar
-          </button>
-        </div>
-      </div>
-    </form>
-
-    <hr style="margin: 20px 0;" />
-
-    <h3>Especificações Cadastradas</h3>
-    
-    <table border="1" width="100%" style="border-collapse: collapse; text-align: left;">
-      <thead>
-        <tr style="background-color: #f2f2f2;">
-          <th style="padding: 8px;">ID</th>
-          <th style="padding: 8px;">Nome</th>
-          <th style="padding: 8px; width: 100px; text-align: center;">Ações</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-if="especificacoes.length === 0">
-          <td colspan="3" style="padding: 15px; text-align: center;">Nenhuma especificação cadastrada.</td>
-        </tr>
-        <tr v-for="espec in especificacoes" :key="espec.id">
-          <td style="padding: 8px;">{{ espec.id }}</td>
-          <td style="padding: 8px;">{{ espec.nome }}</td>
-          <td style="padding: 8px; text-align: center;">
-            <button 
-              @click="excluirEspecificacao(espec.id)" 
-              :disabled="carregando"
-              style="color: red; cursor: pointer;"
-            >
-              Excluir
-            </button>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
-</template>
