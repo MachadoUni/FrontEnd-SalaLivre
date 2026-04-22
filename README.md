@@ -1,38 +1,53 @@
-# SalaLivreF
 
-This template should help get you started developing with Vue 3 in Vite.
+# SalaLivre - Interface Web (Front-end)
 
-## Recommended IDE Setup
+Este repositório contém o front-end do **SalaLivre**, um sistema acadêmico para gerenciamento de salas e recursos do campus. A aplicação foi construída no formato SPA (Single Page Application), oferecendo uma interface moderna, rápida e responsiva para os usuários.
 
-[VS Code](https://code.visualstudio.com/) + [Vue (Official)](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
+O repositório do back-end dessa aplicação pode ser encontrado em [aqui](https://github.com/MachadoUni/reservas).
 
-## Recommended Browser Setup
+## 🚀 Tecnologias Utilizadas
 
-- Chromium-based browsers (Chrome, Edge, Brave, etc.):
-  - [Vue.js devtools](https://chromewebstore.google.com/detail/vuejs-devtools/nhdogjmejiglipccpnnnanhbledajbpd)
-  - [Turn on Custom Object Formatter in Chrome DevTools](http://bit.ly/object-formatters)
-- Firefox:
-  - [Vue.js devtools](https://addons.mozilla.org/en-US/firefox/addon/vue-js-devtools/)
-  - [Turn on Custom Object Formatter in Firefox DevTools](https://fxdx.dev/firefox-devtools-custom-object-formatters/)
+* **Vue.js 3** (Composition API)
+* **Vite** (Build tool e servidor de desenvolvimento)
+* **Vue Router** (Gerenciamento de rotas)
+* **Tailwind CSS** (Estilização e design responsivo)
+* **Axios** (Comunicação com a API REST)
+* **Lucide Icons** (Ícones da interface)
 
-## Customize configuration
+## ⚙️ Como executar o projeto localmente
 
-See [Vite Configuration Reference](https://vite.dev/config/).
+### Pré-requisitos
+* Node.js (versão 18 ou superior) instalado.
+* A API do back-end do SalaLivre deve estar em execução na porta `8080`
 
-## Project Setup
+### 1. Clone o repositório:
 
-```sh
+Na pasta onde deseja clonar o projeto:
+
+```bash
+git clone https://github.com/MachadoUni/FrontEnd-SalaLivre.git
+```
+
+### 2. Acesse a pasta do projeto:
+
+Na mesma linha de comando:
+
+```bash
+cd FrontEnd-SalaLivre
+```
+
+### 3. Instale as dependências do projeto:
+```bash
 npm install
 ```
 
-### Compile and Hot-Reload for Development
-
-```sh
+### 4. Inicie o servidor de desenvolvimento:
+```bash
 npm run dev
 ```
 
-### Compile and Minify for Production
+### 5. Acesse a aplicação:
+Por padrão, pode ser acessada em http://localhost:5173
 
-```sh
-npm run build
-```
+## 🔗 Integração com o Back-end
+Para que este front-end funcione corretamente, é necessário rodar a API REST correspondente. Acesse o repositório do [Back-end do SalaLivre](https://github.com/MachadoUni/reservas).
